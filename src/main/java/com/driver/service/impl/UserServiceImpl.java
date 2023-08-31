@@ -62,7 +62,10 @@ public class UserServiceImpl implements UserService {
             throw new Exception("User not found");
         }
 
-        // Update the properties of userEntity using userDto
+        // Update userEntity properties
+        userEntity.setFirstName(userDto.getFirstName());
+        userEntity.setLastName(userDto.getLastName());
+        // Update other properties as needed
 
         UserEntity updatedUserEntity = userRepository.save(userEntity);
         UserDto updatedUserDto = new UserDto();
