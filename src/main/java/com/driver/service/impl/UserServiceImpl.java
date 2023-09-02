@@ -7,6 +7,7 @@ import com.driver.shared.dto.UserDto;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,83 +18,99 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto createUser(UserDto userDto) throws Exception {
+
         if (userRepository.findByEmail(userDto.getEmail()) != null) {
-            throw new Exception("User already exists");
+            throw new Exception("Record already exists!");
         }
 
         UserEntity userEntity = new UserEntity();
         BeanUtils.copyProperties(userDto, userEntity);
 
-        UserEntity savedUser = userRepository.save(userEntity);
-        UserDto savedUserDto = new UserDto();
-        BeanUtils.copyProperties(savedUser, savedUserDto);
+        String publicUserId = String.valueOf(new SecureRandom());
+        userEntity.setUserId(publicUserId);
 
-        return savedUserDto;
+        UserEntity storedUserDetails = userRepository.save(userEntity);
+
+        UserDto returnValue = new UserDto();
+        BeanUtils.copyProperties(storedUserDetails, returnValue);
+
+        return returnValue;
     }
 
     @Override
     public UserDto getUser(String email) throws Exception {
-        UserEntity userEntity = userRepository.findByEmail(email);
-        if (userEntity == null) {
-            throw new Exception("User not found");
-        }
-        UserDto userDto = new UserDto();
-        BeanUtils.copyProperties(userEntity, userDto);
 
-        return userDto;
+        UserEntity userEntity = userRepository.findByEmail(email);
+
+        if (userEntity == null) {
+            throw new Exception(email);
+        }
+
+        UserDto returnValue = new UserDto();
+        BeanUtils.copyProperties(userEntity, returnValue);
+
+        return returnValue;
     }
 
     @Override
     public UserDto getUserByUserId(String userId) throws Exception {
-        UserEntity userEntity = userRepository.findByUserId(userId);
-        if (userEntity == null) {
-            throw new Exception("User not found");
-        }
-        UserDto userDto = new UserDto();
-        BeanUtils.copyProperties(userEntity, userDto);
 
-        return userDto;
+        UserDto returnValue = new UserDto();
+        UserEntity userEntity = userRepository.findByUserId(userId);
+
+        if (userEntity == null) {
+            throw new Exception(userId);
+        }
+        BeanUtils.copyProperties(userEntity, returnValue);
+
+        return returnValue;
     }
 
     @Override
     public UserDto updateUser(String userId, UserDto userDto) throws Exception {
+
+        UserDto returnValue = new UserDto();
+
         UserEntity userEntity = userRepository.findByUserId(userId);
+
         if (userEntity == null) {
-            throw new Exception("User not found");
+            throw new Exception(userId);
         }
 
-        // Update userEntity properties
         userEntity.setFirstName(userDto.getFirstName());
         userEntity.setLastName(userDto.getLastName());
-        // Update other properties as needed
 
-        UserEntity updatedUserEntity = userRepository.save(userEntity);
-        UserDto updatedUserDto = new UserDto();
-        BeanUtils.copyProperties(updatedUserEntity, updatedUserDto);
+        UserEntity updatedUserDetails = userRepository.save(userEntity);
+        BeanUtils.copyProperties(updatedUserDetails, returnValue);
 
-        return updatedUserDto;
+        return returnValue;
     }
 
     @Override
     public void deleteUser(String userId) throws Exception {
+
         UserEntity userEntity = userRepository.findByUserId(userId);
+
         if (userEntity == null) {
-            throw new Exception("User not found");
+            throw new Exception(userId);
         }
+
         userRepository.delete(userEntity);
     }
 
     @Override
     public List<UserDto> getUsers() {
-        Iterable<UserEntity> userEntities = userRepository.findAll();
-        List<UserDto> userDtos = new ArrayList<>();
 
-        for (UserEntity entity : userEntities) {
+        List<UserDto> returnValue = new ArrayList<>();
+
+        Iterable<UserEntity> iterableObjects = userRepository.findAll();
+
+        for (UserEntity userEntity : iterableObjects) {
             UserDto userDto = new UserDto();
-            BeanUtils.copyProperties(entity, userDto);
-            userDtos.add(userDto);
+            BeanUtils.copyProperties(userEntity, userDto);
+            returnValue.add(userDto);
         }
 
-        return userDtos;
+        return returnValue;
     }
 }

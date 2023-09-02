@@ -10,6 +10,7 @@ import com.driver.model.response.RequestOperationName;
 import com.driver.model.response.RequestOperationStatus;
 import com.driver.service.OrderService;
 import com.driver.shared.dto.OrderDto;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -31,54 +32,71 @@ public class OrderController {
 	@GetMapping(path="/{id}")
 	public OrderDetailsResponse getOrder(@PathVariable String id) throws Exception{
 
-		OrderDto orderDto = orderService.getOrderById(id);
 		OrderDetailsResponse returnValue = new OrderDetailsResponse();
-		BeanUtils.copyProperties(orderDto, returnValue);
+		ModelMapper modelMapper = new ModelMapper();
+
+		OrderDto orderDto = orderService.getOrderById(id);
+		returnValue = modelMapper.map(orderDto, OrderDetailsResponse.class);
+
 		return returnValue;
 	}
 	
 	@PostMapping()
 	public OrderDetailsResponse createOrder(@RequestBody OrderDetailsRequestModel order) {
 
+		OrderDetailsResponse returnValue = new OrderDetailsResponse();
+		ModelMapper modelMapper = new ModelMapper();
+
 		OrderDto orderDto = new OrderDto();
 		BeanUtils.copyProperties(order, orderDto);
+
 		OrderDto createdOrder = orderService.createOrder(orderDto);
-		OrderDetailsResponse returnValue = new OrderDetailsResponse();
-		BeanUtils.copyProperties(createdOrder, returnValue);
+		returnValue = modelMapper.map(createdOrder, OrderDetailsResponse.class);
+
 		return returnValue;
 	}
 		
 	@PutMapping(path="/{id}")
 	public OrderDetailsResponse updateOrder(@PathVariable String id, @RequestBody OrderDetailsRequestModel order) throws Exception{
 
-		OrderDto orderDto = new OrderDto();
-		BeanUtils.copyProperties(order, orderDto);
-		OrderDto updatedOrder = orderService.updateOrderDetails(id, orderDto);
 		OrderDetailsResponse returnValue = new OrderDetailsResponse();
-		BeanUtils.copyProperties(updatedOrder, returnValue);
+		ModelMapper modelMapper = new ModelMapper();
+
+		OrderDto orderDto = new OrderDto();
+		orderDto = modelMapper.map(order, OrderDto.class);
+
+		OrderDto updatedOrder = orderService.updateOrderDetails(id, orderDto);
+		returnValue = modelMapper.map(updatedOrder, OrderDetailsResponse.class);
+
 		return returnValue;
 	}
 	
 	@DeleteMapping(path = "/{id}")
 	public OperationStatusModel deleteOrder(@PathVariable String id) throws Exception {
 
-		orderService.deleteOrder(id);
 		OperationStatusModel returnValue = new OperationStatusModel();
 		returnValue.setOperationName(RequestOperationName.DELETE.name());
+
+		orderService.deleteOrder(id);
+
 		returnValue.setOperationResult(RequestOperationStatus.SUCCESS.name());
+
 		return returnValue;
 	}
 	
 	@GetMapping()
 	public List<OrderDetailsResponse> getOrders() {
 
-		List<OrderDto> orderDtos = orderService.getOrders();
 		List<OrderDetailsResponse> returnValue = new ArrayList<>();
-		for (OrderDto orderDto : orderDtos) {
+
+		List<OrderDto> orders = orderService.getOrders();
+
+		for(OrderDto orderDto : orders) {
 			OrderDetailsResponse response = new OrderDetailsResponse();
 			BeanUtils.copyProperties(orderDto, response);
 			returnValue.add(response);
 		}
+
 		return returnValue;
 	}
 }

@@ -10,6 +10,7 @@ import com.driver.model.response.RequestOperationName;
 import com.driver.model.response.RequestOperationStatus;
 import com.driver.service.FoodService;
 import com.driver.shared.dto.FoodDto;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -31,54 +32,70 @@ public class FoodController {
 	@GetMapping(path="/{id}")
 	public FoodDetailsResponse getFood(@PathVariable String id) throws Exception{
 
-		FoodDto foodDto = foodService.getFoodById(id);
 		FoodDetailsResponse returnValue = new FoodDetailsResponse();
-		BeanUtils.copyProperties(foodDto, returnValue);
+		ModelMapper modelMapper = new ModelMapper();
+
+		FoodDto foodDto = foodService.getFoodById(id);
+		returnValue = modelMapper.map(foodDto, FoodDetailsResponse.class);
+
 		return returnValue;
 	}
 
 	@PostMapping("/create")
 	public FoodDetailsResponse createFood(@RequestBody FoodDetailsRequestModel foodDetails) {
 
-		FoodDto foodDto = new FoodDto();
-		BeanUtils.copyProperties(foodDetails, foodDto);
-		FoodDto createdFood = foodService.createFood(foodDto);
 		FoodDetailsResponse returnValue = new FoodDetailsResponse();
-		BeanUtils.copyProperties(createdFood, returnValue);
+		ModelMapper modelMapper = new ModelMapper();
+
+		FoodDto foodDto = modelMapper.map(foodDetails, FoodDto.class);
+		FoodDto createFood = foodService.createFood(foodDto);
+
+		returnValue = modelMapper.map(createFood, FoodDetailsResponse.class);
+
 		return returnValue;
 	}
 
 	@PutMapping(path="/{id}")
 	public FoodDetailsResponse updateFood(@PathVariable String id, @RequestBody FoodDetailsRequestModel foodDetails) throws Exception{
 
-		FoodDto foodDto = new FoodDto();
-		BeanUtils.copyProperties(foodDetails, foodDto);
-		FoodDto updatedFood = foodService.updateFoodDetails(id, foodDto);
 		FoodDetailsResponse returnValue = new FoodDetailsResponse();
-		BeanUtils.copyProperties(updatedFood, returnValue);
+		ModelMapper modelMapper = new ModelMapper();
+
+		FoodDto foodDto = new FoodDto();
+		foodDto = modelMapper.map(foodDetails, FoodDto.class);
+
+		FoodDto updatedUser = foodService.updateFoodDetails(id, foodDto);
+		returnValue = modelMapper.map(updatedUser, FoodDetailsResponse.class);
+
 		return returnValue;
 	}
 
 	@DeleteMapping(path = "/{id}")
 	public OperationStatusModel deleteFood(@PathVariable String id) throws Exception{
 
-		foodService.deleteFoodItem(id);
 		OperationStatusModel returnValue = new OperationStatusModel();
 		returnValue.setOperationName(RequestOperationName.DELETE.name());
+
+		foodService.deleteFoodItem(id);
+
 		returnValue.setOperationResult(RequestOperationStatus.SUCCESS.name());
+
 		return returnValue;
 	}
 	
 	@GetMapping()
 	public List<FoodDetailsResponse> getFoods() {
 
-		List<FoodDto> foodDtos = foodService.getFoods();
 		List<FoodDetailsResponse> returnValue = new ArrayList<>();
-		for (FoodDto foodDto : foodDtos) {
+
+		List<FoodDto> foods = foodService.getFoods();
+
+		for(FoodDto foodDto: foods) {
 			FoodDetailsResponse response = new FoodDetailsResponse();
 			BeanUtils.copyProperties(foodDto, response);
 			returnValue.add(response);
 		}
+
 		return returnValue;
 	}
 }

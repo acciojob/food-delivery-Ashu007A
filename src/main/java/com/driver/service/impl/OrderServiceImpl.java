@@ -4,9 +4,11 @@ import com.driver.io.entity.OrderEntity;
 import com.driver.io.repository.OrderRepository;
 import com.driver.service.OrderService;
 import com.driver.shared.dto.OrderDto;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,64 +19,82 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public OrderDto createOrder(OrderDto orderDto) {
-        OrderEntity orderEntity = new OrderEntity();
-        BeanUtils.copyProperties(orderDto, orderEntity);
 
-        OrderEntity savedOrder = orderRepository.save(orderEntity);
-        OrderDto savedOrderDto = new OrderDto();
-        BeanUtils.copyProperties(savedOrder, savedOrderDto);
+        ModelMapper modelMapper = new ModelMapper();
+        OrderEntity orderEntity = modelMapper.map(orderDto, OrderEntity.class);
 
-        return savedOrderDto;
+        String orderId = String.valueOf(new SecureRandom());
+        orderEntity.setOrderId(orderId);
+        orderEntity.setStatus(false);
+
+        OrderEntity storedOrder = orderRepository.save(orderEntity);
+        OrderDto returnValue = modelMapper.map(storedOrder, OrderDto.class);
+
+        return returnValue;
     }
 
     @Override
     public OrderDto getOrderById(String orderId) throws Exception {
-        OrderEntity orderEntity = orderRepository.findByOrderId(orderId);
-        if (orderEntity == null) {
-            throw new Exception("Order not found");
-        }
-        OrderDto orderDto = new OrderDto();
-        BeanUtils.copyProperties(orderEntity, orderDto);
 
-        return orderDto;
+        OrderDto returnValue = new OrderDto();
+        ModelMapper modelMapper = new ModelMapper();
+
+        OrderEntity orderEntity = orderRepository.findByOrderId(orderId);
+
+        if (orderEntity == null) {
+            throw new Exception(orderId);
+        }
+
+        returnValue = modelMapper.map(orderEntity, OrderDto.class);
+
+        return returnValue;
     }
 
     @Override
     public OrderDto updateOrderDetails(String orderId, OrderDto order) throws Exception {
+
+        OrderDto returnValue = new OrderDto();
+        ModelMapper modelMapper = new ModelMapper();
+
         OrderEntity orderEntity = orderRepository.findByOrderId(orderId);
         if (orderEntity == null) {
-            throw new Exception("Order not found");
+            throw new Exception(orderId);
         }
 
-        // Update the properties of orderEntity using order
+        orderEntity.setCost(order.getCost());
+        orderEntity.setItems(order.getItems());
+        orderEntity.setStatus(true);
 
-        OrderEntity updatedOrderEntity = orderRepository.save(orderEntity);
-        OrderDto updatedOrderDto = new OrderDto();
-        BeanUtils.copyProperties(updatedOrderEntity, updatedOrderDto);
+        OrderEntity updatedOrder = orderRepository.save(orderEntity);
+        returnValue = modelMapper.map(updatedOrder, OrderDto.class);
 
-        return updatedOrderDto;
+       return returnValue;
     }
 
     @Override
     public void deleteOrder(String orderId) throws Exception {
+
         OrderEntity orderEntity = orderRepository.findByOrderId(orderId);
         if (orderEntity == null) {
-            throw new Exception("Order not found");
+            throw new Exception(orderId);
         }
+
         orderRepository.delete(orderEntity);
     }
 
     @Override
     public List<OrderDto> getOrders() {
-        Iterable<OrderEntity> orderEntities = orderRepository.findAll();
-        List<OrderDto> orderDtos = new ArrayList<>();
 
-        for (OrderEntity entity : orderEntities) {
+        List<OrderDto> returnValue = new ArrayList<>();
+
+        Iterable<OrderEntity> iteratableObjects = orderRepository.findAll();
+
+        for (OrderEntity orderEntity : iteratableObjects) {
             OrderDto orderDto = new OrderDto();
-            BeanUtils.copyProperties(entity, orderDto);
-            orderDtos.add(orderDto);
+            BeanUtils.copyProperties(orderEntity, orderDto);
+            returnValue.add(orderDto);
         }
 
-        return orderDtos;
+        return returnValue;
     }
 }

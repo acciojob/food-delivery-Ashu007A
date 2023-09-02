@@ -31,54 +31,68 @@ public class UserController {
 	@GetMapping(path = "/{id}")
 	public UserResponse getUser(@PathVariable String id) throws Exception{
 
-		UserDto userDto = userService.getUserByUserId(id);
 		UserResponse returnValue = new UserResponse();
+
+		UserDto userDto = userService.getUserByUserId(id);
 		BeanUtils.copyProperties(userDto, returnValue);
+
 		return returnValue;
 	}
 
 	@PostMapping()
 	public UserResponse createUser(@RequestBody UserDetailsRequestModel userDetails) throws Exception{
 
+		UserResponse returnValue = new UserResponse();
+
 		UserDto userDto = new UserDto();
 		BeanUtils.copyProperties(userDetails, userDto);
-		UserDto createdUser = userService.createUser(userDto);
-		UserResponse returnValue = new UserResponse();
-		BeanUtils.copyProperties(createdUser, returnValue);
+
+		UserDto createUser = userService.createUser(userDto);
+		BeanUtils.copyProperties(createUser, returnValue);
+
 		return returnValue;
 	}
 
 	@PutMapping(path = "/{id}")
 	public UserResponse updateUser(@PathVariable String id, @RequestBody UserDetailsRequestModel userDetails) throws Exception{
 
+		UserResponse returnValue = new UserResponse();
+
 		UserDto userDto = new UserDto();
 		BeanUtils.copyProperties(userDetails, userDto);
-		UserDto updatedUser = userService.updateUser(id, userDto);
-		UserResponse returnValue = new UserResponse();
-		BeanUtils.copyProperties(updatedUser, returnValue);
+
+		UserDto updateUser = userService.updateUser(id, userDto);
+		BeanUtils.copyProperties(updateUser, returnValue);
+
 		return returnValue;
 	}
 
 	@DeleteMapping(path = "/{id}")
 	public OperationStatusModel deleteUser(@PathVariable String id) throws Exception{
 
-		userService.deleteUser(id);
 		OperationStatusModel returnValue = new OperationStatusModel();
 		returnValue.setOperationName(RequestOperationName.DELETE.name());
+
+		userService.deleteUser(id);
+
 		returnValue.setOperationResult(RequestOperationStatus.SUCCESS.name());
+
 		return returnValue;
 	}
 	
 	@GetMapping()
 	public List<UserResponse> getUsers(){
 
-		List<UserDto> userDtos = userService.getUsers();
 		List<UserResponse> returnValue = new ArrayList<>();
-		for (UserDto userDto : userDtos) {
-			UserResponse response = new UserResponse();
-			BeanUtils.copyProperties(userDto, response);
-			returnValue.add(response);
+
+		List<UserDto> users = userService.getUsers();
+
+		for(UserDto userDto : users) {
+			UserResponse userModel = new UserResponse();
+			BeanUtils.copyProperties(userDto, userModel);
+			returnValue.add(userModel);
 		}
+
 		return returnValue;
 	}
 	
